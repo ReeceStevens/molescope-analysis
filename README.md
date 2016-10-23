@@ -3,8 +3,12 @@
 *BME Senior Design Team 10: Stephanie Teoh, Malvika Gupta, Stefan Hubner,
 Reece Stevens*
 
-This repository contains python utilities to analyse images taken with the
+This repository contains python utilities to analyze images taken with the
 molescope device developed by our team.
+
+![single_img_analysis][single]
+
+![two_img_analysis][double]
 
 ## Objectives
 
@@ -50,3 +54,6 @@ Requires Python >= 3.5. The following packages are installed when you type
 - `numpy`: matrix manipulation and advanced mathematics library
 
 - `matplotlib`: plotting library (MATLAB-like syntax)
+
+[single]: ./resources/single_image_analysis.png
+[double]: ./resources/two_image_analysis.png

@@ -86,59 +86,112 @@ def plot_all_datasets():
     plt.show()
 
 
-def color_histogram(filepath):
-    img = Image.open(filepath)
-    color_data = img.getdata()
-    length, width = size_inversion(img.size)
-    red, green, blue = [list(color) for color in zip(*color_data)]
-    plt.hist(blue, COLOR_CHANNEL_MAX)
-    plt.hold(True)
-    plt.hist(green, COLOR_CHANNEL_MAX)
-    plt.hist(red, COLOR_CHANNEL_MAX)
-    plt.xlabel('Color Intensity')
-    plt.ylabel('Number of Pixels')
-    plt.title('Color Histogram')
-    plt.show()
+def plot_color_histogram(figure, red, green, blue):
+    figure.hist(blue, COLOR_CHANNEL_MAX)
+    figure.hold(True)
+    figure.hist(green, COLOR_CHANNEL_MAX)
+    figure.hist(red, COLOR_CHANNEL_MAX)
+    figure.set_xlabel('Color Intensity')
+    figure.set_ylabel('Number of Pixels')
+    figure.set_title('Masked Color Histogram')
+
+
+def color_histogram_diff(figure, color1, color2):
+    color_diff = [abs(color) for color in np.subtract(color2,color1) if color != 0]
+    figure.hist(color_diff, bins=COLOR_CHANNEL_MAX)
+
+
+def plot_color_histogram_diff(figure, rgb1, rgb2):
+    red1, green1, blue1 = rgb1
+    red2, green2, blue2 = rgb2
+    color_histogram_diff(figure, blue1, blue2)
+    figure.hold(True)
+    color_histogram_diff(figure, green1, green2)
+    color_histogram_diff(figure, red1, red2)
+    figure.set_xlabel('Per Pixel Color Intensity Difference')
+    figure.set_ylabel('Number of Pixels')
+    figure.set_title('Color Distribution Differential')
+
+
+def plot_intensity_histogram(figure, raw_color_data, dimensions):
+    bw_data = list(map(intensity, list(raw_color_data)))
+    img_data = np.resize(bw_data, size_inversion(dimensions))
+    masked_img_data = mask(img_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    intensity_vals = flatten([[x for x in row if x != 0] for row in masked_img_data])
+
+    figure.hist(intensity_vals, COLOR_CHANNEL_MAX/2)
+    figure.set_xlabel('Intensity')
+    figure.set_ylabel('Number of Pixels')
+    figure.set_title('Masked Image Intensity Histogram')
+
+
+def plot_original_image(figure, img):
+    figure.imshow(img)
+    figure.set_title('Original Image')
+
+
+def plot_masked_color_image(figure, masked_color_data):
+    figure.imshow(masked_color_data)
+    figure.set_title('Masked Image')
+
+
+def get_rgb_from_masked_color_array(color_array):
+    masked_color_vals_only = [val for val in color_array if val != (0,0,0)]
+    red, green, blue = [list(color) for color in zip(*masked_color_vals_only)]
+    return red, green, blue
 
 
 def single_image_analysis(filepath):
     img = Image.open(filepath)
-    color_data = img.getdata()
-    bw_data = list(map(intensity, list(color_data)))
-    img_data = np.resize(bw_data, size_inversion(img.size))
+    raw_color_data = img.getdata()
 
-    f, axarr = plt.subplots(2,2)
-    f.suptitle('Single Image Analysis for ' + filepath)
-    axarr[0,0].imshow(img)
-    axarr[0,0].set_title('Original Image')
-
-    masked_color_array = color_mask(color_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_color_array = color_mask(raw_color_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
     masked_color_data = np.resize(masked_color_array, color_size_conversion(img.size))
-    axarr[0,1].imshow(masked_color_data)
-    axarr[0,1].set_title('Masked Image')
 
     masked_color_vals_only = [val for val in masked_color_array if val != (0,0,0)]
     red, green, blue = [list(color) for color in zip(*masked_color_vals_only)]
-    axarr[1,0].hist(blue, COLOR_CHANNEL_MAX)
-    axarr[1,0].hold(True)
-    axarr[1,0].hist(green, COLOR_CHANNEL_MAX)
-    axarr[1,0].hist(red, COLOR_CHANNEL_MAX)
-    axarr[1,0].set_xlabel('Color Intensity')
-    axarr[1,0].set_ylabel('Number of Pixels')
-    axarr[1,0].set_title('Masked Color Histogram')
 
-    masked_img_data = mask(img_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
-    intensity_vals = flatten([[x for x in row if x != 0] for row in masked_img_data])
-    axarr[1,1].hist(intensity_vals, COLOR_CHANNEL_MAX/2)
-    axarr[1,1].set_xlabel('Intensity')
-    axarr[1,1].set_ylabel('Number of Pixels')
-    axarr[1,1].set_title('Masked Image Intensity Histogram')
+    f, axarr = plt.subplots(2,2)
+    f.suptitle('Single Image Analysis for ' + filepath)
+    plot_original_image(axarr[0,0], img)
+    plot_masked_color_image(axarr[0,1], masked_color_data)
+    plot_color_histogram(axarr[1,0], red, green, blue)
+    plot_intensity_histogram(axarr[1,1], raw_color_data, img.size)
+    plt.show()
+
+
+def two_image_analysis(file1, file2):
+    img1 = Image.open(file1)
+    img2 = Image.open(file2)
+
+    raw_color_data1 = img1.getdata()
+    raw_color_data2 = img2.getdata()
+    masked_color_array1 = color_mask(raw_color_data1, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_color_data1 = np.resize(masked_color_array1, color_size_conversion(img1.size))
+    masked_color_array2 = color_mask(raw_color_data2, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_color_data2 = np.resize(masked_color_array2, color_size_conversion(img2.size))
+
+    rgb_array1 = [list(color) for color in zip(*masked_color_array1)]
+    rgb_array2 = [list(color) for color in zip(*masked_color_array2)]
+
+    f, axarr = plt.subplots(2,3)
+    f.suptitle('Two Image Analysis for ' + file1 + ' and ' + file2)
+    plot_original_image(axarr[0,0], img1)
+    plot_original_image(axarr[1,0], img2)
+    plot_masked_color_image(axarr[0,1], masked_color_data1)
+    plot_masked_color_image(axarr[1,1], masked_color_data2)
+    plot_color_histogram_diff(axarr[0,2], rgb_array1, rgb_array2)
+    plot_intensity_histogram(axarr[1,2], raw_color_data1, img1.size);
+    axarr[1,2].hold(True)
+    plot_intensity_histogram(axarr[1,2], raw_color_data2, img2.size);
 
     plt.show()
 
 
+
 def main():
-    single_image_analysis('./datasets/IMG_0362.JPG')
+    # single_image_analysis('./datasets/IMG_0362.JPG')
+    two_image_analysis('./datasets/IMG_0362.JPG', './datasets/IMG_0363.JPG')
 
 
 main()
