@@ -33,8 +33,8 @@ def plot_color_histogram_diff(figure, rgb1, rgb2):
     figure.hold(True)
     u.color_histogram_diff(figure, green1, green2)
     u.color_histogram_diff(figure, red1, red2)
-    figure.set_xlabel('Per Pixel Color Intensity Difference')
-    figure.set_ylabel('Number of Pixels')
+    figure.set_xlabel('Color Intensity')
+    figure.set_ylabel('Difference in Number of Pixels')
     figure.set_title('Color Distribution Differential')
 
 
@@ -109,8 +109,8 @@ def two_image_analysis(file1, file2):
 
 
 def main():
-    single_image_analysis('./datasets/IMG_0362.JPG')
-    # two_image_analysis('./datasets/IMG_0362.JPG', './datasets/IMG_0363.JPG')
+    # single_image_analysis('./datasets/IMG_0362.JPG')
+    two_image_analysis('./datasets/IMG_0362.JPG', './datasets/IMG_0363.JPG')
 
 
 main()
