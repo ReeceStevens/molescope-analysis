@@ -62,8 +62,12 @@ def color_mask(image_array, threshold):
 
 
 def color_histogram_diff(figure, color1, color2):
-    color_diff = [abs(color) for color in np.subtract(color2,color1) if color != 0]
-    figure.hist(color_diff, bins=COLOR_CHANNEL_MAX)
+    vals1, bins1 = np.histogram(color1, bins=COLOR_CHANNEL_MAX, range=(0,COLOR_CHANNEL_MAX))
+    vals2, bins2 = np.histogram(color2, bins=COLOR_CHANNEL_MAX, range=(0,COLOR_CHANNEL_MAX))
+    # We ignore the zero bucket since the mask will blow this up
+    vals1[0] = 0
+    vals2[0] = 0
+    figure.bar(bins1[1:], list(map(abs, list(np.subtract(vals2, vals1)))), alpha=0.5)
 
 
 def get_rgb_from_masked_color_array(color_array):

@@ -17,10 +17,10 @@ def image_avg_intensity(image_array):
 
 
 def plot_color_histogram(figure, red, green, blue):
-    figure.hist(blue, COLOR_CHANNEL_MAX)
+    figure.hist(blue, COLOR_CHANNEL_MAX, alpha=0.5)
     figure.hold(True)
-    figure.hist(green, COLOR_CHANNEL_MAX)
-    figure.hist(red, COLOR_CHANNEL_MAX)
+    figure.hist(green, COLOR_CHANNEL_MAX, alpha=0.5)
+    figure.hist(red, COLOR_CHANNEL_MAX, alpha=0.5)
     figure.set_xlabel('Color Intensity')
     figure.set_ylabel('Number of Pixels')
     figure.set_title('Masked Color Histogram')
@@ -44,7 +44,7 @@ def plot_intensity_histogram(figure, raw_color_data, dimensions):
     masked_img_data = u.mask(img_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
     intensity_vals = u.flatten([[x for x in row if x != 0] for row in masked_img_data])
 
-    figure.hist(intensity_vals, COLOR_CHANNEL_MAX/2)
+    figure.hist(intensity_vals, COLOR_CHANNEL_MAX/2, alpha=0.5)
     figure.set_xlabel('Intensity')
     figure.set_ylabel('Number of Pixels')
     figure.set_title('Masked Image Intensity Histogram')
@@ -109,8 +109,8 @@ def two_image_analysis(file1, file2):
 
 
 def main():
-    # single_image_analysis('./datasets/IMG_0362.JPG')
-    two_image_analysis('./datasets/IMG_0362.JPG', './datasets/IMG_0363.JPG')
+    single_image_analysis('./datasets/IMG_0362.JPG')
+    # two_image_analysis('./datasets/IMG_0362.JPG', './datasets/IMG_0363.JPG')
 
 
 main()
