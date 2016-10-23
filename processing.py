@@ -1,89 +1,19 @@
-from functools import partial
-from os import listdir
-
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 
-EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD = 110
-COLOR_CHANNEL_MAX = 256
-
-def intensity(rgb_val):
-    red, green, blue = rgb_val
-    return (red + green + blue) / 3
-
-
-def size_inversion(init_size):
-    length, width = init_size
-    return (width, length)
-
-def color_size_conversion(init_size):
-    length, width = init_size
-    return (width, length, 3)
-
-def flatten(data_matrix):
-    flattened = []
-    for row in data_matrix:
-        flattened.extend(row)
-    return flattened
-
-
-def array_from_jpeg(filepath):
-    img = Image.open(filepath)
-    bw_data = list(map(intensity, list(img.getdata())))
-    return np.resize(bw_data, size_inversion(img.size))
-
-
-def mask_single(threshold, value):
-    if value < threshold:
-        return 0
-    else:
-        return value
-
-
-def color_mask_single(threshold, value):
-    if intensity(value) < threshold:
-        return (0,0,0)
-    else:
-        red, green, blue = value
-        return (COLOR_CHANNEL_MAX-red, COLOR_CHANNEL_MAX-green, COLOR_CHANNEL_MAX-blue)
-
-
-def mask(image_array, threshold):
-    apply_mask = partial(mask_single, threshold)
-    return [list(map(apply_mask, row)) for row in image_array]
-
-
-def color_mask(image_array, threshold):
-    apply_mask = partial(color_mask_single, threshold)
-    return list(map(apply_mask, image_array))
+import utility as u
+from utility import EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD, COLOR_CHANNEL_MAX
 
 
 def image_avg_intensity(image_array):
-    masked_image = mask(image_array, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_image = u.mask(image_array, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
     nonzero_count = 0
     for row in masked_image:
         for val in row:
             if val != 0:
                 nonzero_count += 1
     return np.sum(masked_image) / nonzero_count
-
-
-def plot_all_datasets():
-    all_imagepaths = listdir('./datasets')
-    rowlen = 5
-    f, axarr = plt.subplots(2,rowlen)
-    i = 0
-    j = 0
-    for path in all_imagepaths:
-        if j == rowlen:
-            j  = 0
-            i += 1
-        fullpath = './datasets/' + path
-        data = array_from_jpeg(fullpath)
-        axarr[i,j].imshow(mask(data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD))
-        j += 1
-    plt.show()
 
 
 def plot_color_histogram(figure, red, green, blue):
@@ -96,28 +26,23 @@ def plot_color_histogram(figure, red, green, blue):
     figure.set_title('Masked Color Histogram')
 
 
-def color_histogram_diff(figure, color1, color2):
-    color_diff = [abs(color) for color in np.subtract(color2,color1) if color != 0]
-    figure.hist(color_diff, bins=COLOR_CHANNEL_MAX)
-
-
 def plot_color_histogram_diff(figure, rgb1, rgb2):
     red1, green1, blue1 = rgb1
     red2, green2, blue2 = rgb2
-    color_histogram_diff(figure, blue1, blue2)
+    u.color_histogram_diff(figure, blue1, blue2)
     figure.hold(True)
-    color_histogram_diff(figure, green1, green2)
-    color_histogram_diff(figure, red1, red2)
+    u.color_histogram_diff(figure, green1, green2)
+    u.color_histogram_diff(figure, red1, red2)
     figure.set_xlabel('Per Pixel Color Intensity Difference')
     figure.set_ylabel('Number of Pixels')
     figure.set_title('Color Distribution Differential')
 
 
 def plot_intensity_histogram(figure, raw_color_data, dimensions):
-    bw_data = list(map(intensity, list(raw_color_data)))
-    img_data = np.resize(bw_data, size_inversion(dimensions))
-    masked_img_data = mask(img_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
-    intensity_vals = flatten([[x for x in row if x != 0] for row in masked_img_data])
+    bw_data = list(map(u.intensity, list(raw_color_data)))
+    img_data = np.resize(bw_data, u.size_inversion(dimensions))
+    masked_img_data = u.mask(img_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    intensity_vals = u.flatten([[x for x in row if x != 0] for row in masked_img_data])
 
     figure.hist(intensity_vals, COLOR_CHANNEL_MAX/2)
     figure.set_xlabel('Intensity')
@@ -135,18 +60,12 @@ def plot_masked_color_image(figure, masked_color_data):
     figure.set_title('Masked Image')
 
 
-def get_rgb_from_masked_color_array(color_array):
-    masked_color_vals_only = [val for val in color_array if val != (0,0,0)]
-    red, green, blue = [list(color) for color in zip(*masked_color_vals_only)]
-    return red, green, blue
-
-
 def single_image_analysis(filepath):
     img = Image.open(filepath)
     raw_color_data = img.getdata()
 
-    masked_color_array = color_mask(raw_color_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
-    masked_color_data = np.resize(masked_color_array, color_size_conversion(img.size))
+    masked_color_array = u.color_mask(raw_color_data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_color_data = np.resize(masked_color_array, u.color_size_conversion(img.size))
 
     masked_color_vals_only = [val for val in masked_color_array if val != (0,0,0)]
     red, green, blue = [list(color) for color in zip(*masked_color_vals_only)]
@@ -166,10 +85,10 @@ def two_image_analysis(file1, file2):
 
     raw_color_data1 = img1.getdata()
     raw_color_data2 = img2.getdata()
-    masked_color_array1 = color_mask(raw_color_data1, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
-    masked_color_data1 = np.resize(masked_color_array1, color_size_conversion(img1.size))
-    masked_color_array2 = color_mask(raw_color_data2, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
-    masked_color_data2 = np.resize(masked_color_array2, color_size_conversion(img2.size))
+    masked_color_array1 = u.color_mask(raw_color_data1, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_color_data1 = np.resize(masked_color_array1, u.color_size_conversion(img1.size))
+    masked_color_array2 = u.color_mask(raw_color_data2, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD)
+    masked_color_data2 = np.resize(masked_color_array2, u.color_size_conversion(img2.size))
 
     rgb_array1 = [list(color) for color in zip(*masked_color_array1)]
     rgb_array2 = [list(color) for color in zip(*masked_color_array2)]

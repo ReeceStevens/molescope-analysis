@@ -1,0 +1,91 @@
+from os import listdir
+from functools import partial
+
+from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
+
+EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD = 110
+COLOR_CHANNEL_MAX = 256
+
+def intensity(rgb_val):
+    red, green, blue = rgb_val
+    return (red + green + blue) / 3
+
+
+def size_inversion(init_size):
+    length, width = init_size
+    return (width, length)
+
+
+def color_size_conversion(init_size):
+    length, width = init_size
+    return (width, length, 3)
+
+
+def flatten(data_matrix):
+    flattened = []
+    for row in data_matrix:
+        flattened.extend(row)
+    return flattened
+
+
+def array_from_jpeg(filepath):
+    img = Image.open(filepath)
+    bw_data = list(map(intensity, list(img.getdata())))
+    return np.resize(bw_data, size_inversion(img.size))
+
+
+def mask_single(threshold, value):
+    if value < threshold:
+        return 0
+    else:
+        return value
+
+
+def color_mask_single(threshold, value):
+    if intensity(value) < threshold:
+        return (0,0,0)
+    else:
+        red, green, blue = value
+        return (COLOR_CHANNEL_MAX-red, COLOR_CHANNEL_MAX-green, COLOR_CHANNEL_MAX-blue)
+
+
+def mask(image_array, threshold):
+    apply_mask = partial(mask_single, threshold)
+    return [list(map(apply_mask, row)) for row in image_array]
+
+
+def color_mask(image_array, threshold):
+    apply_mask = partial(color_mask_single, threshold)
+    return list(map(apply_mask, image_array))
+
+
+def color_histogram_diff(figure, color1, color2):
+    color_diff = [abs(color) for color in np.subtract(color2,color1) if color != 0]
+    figure.hist(color_diff, bins=COLOR_CHANNEL_MAX)
+
+
+def get_rgb_from_masked_color_array(color_array):
+    masked_color_vals_only = [val for val in color_array if val != (0,0,0)]
+    red, green, blue = [list(color) for color in zip(*masked_color_vals_only)]
+    return red, green, blue
+
+
+def plot_all_datasets():
+    all_imagepaths = listdir('./datasets')
+    rowlen = 5
+    f, axarr = plt.subplots(2,rowlen)
+    i = 0
+    j = 0
+    for path in all_imagepaths:
+        if j == rowlen:
+            j  = 0
+            i += 1
+        fullpath = './datasets/' + path
+        data = array_from_jpeg(fullpath)
+        axarr[i,j].imshow(mask(data, EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD))
+        j += 1
+    plt.show()
+
+
