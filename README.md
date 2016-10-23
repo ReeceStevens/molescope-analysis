@@ -27,9 +27,23 @@ image consistency must be developed.
 
 3. Color distribution histogram
 
+## Installation
+
+Installation requires GNU Make and Python 3.5 to be installed on your computer.
+
+Simply type `make install` to install the requisite dependencies in your
+computer. Note that you may need administrative privileges if you are trying to
+install these packages in your global Python setup. If that makes you feel
+not-so-good, activate a virtual environment and a `make install` will have
+everything installed locally.
+
+The program can be run by typing `make`. There is some minimal dependency
+checking that happens, but be sure to follow the above step first!
+
 ## Program Dependencies
 
-Requires Python >= 3.5 and the following packages:
+Requires Python >= 3.5. The following packages are installed when you type
+`make install`:
 
 - `pillow`: Python imaging library
 
