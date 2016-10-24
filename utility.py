@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 
-EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD = 110
+EFFECTIVE_IMAGE_BOUNDARY_THRESHOLD = 55
 COLOR_CHANNEL_MAX = 256
 
 def intensity(rgb_val):
@@ -67,7 +67,9 @@ def color_histogram_diff(figure, color1, color2):
     # We ignore the zero bucket since the mask will blow this up
     vals1[0] = 0
     vals2[0] = 0
-    figure.bar(bins1[1:], list(map(abs, list(np.subtract(vals2, vals1)))), alpha=0.5)
+    diff_vals = list(map(abs, list(np.subtract(vals2, vals1))))
+    figure.bar(bins1[1:], diff_vals, alpha=0.7)
+    return diff_vals, bins1
 
 
 def get_rgb_from_masked_color_array(color_array):
